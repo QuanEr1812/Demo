@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Ôn Tập — Demo</title>
+<style>
+:root{--bg:#0b1020;--panel:#131c31;--line:#2b3856;--teal:#2dd4bf;--cyan:#7dd3fc;--purple:#a78bfa;--text:#f1f5f9;--muted:#a8b5cc}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 90% 5%,#183d50 0,transparent 28%),radial-gradient(circle at 0% 100%,#31245a 0,transparent 30%),var(--bg);color:var(--text);font:18px/1.6 system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:30px 5vw 24px;border-bottom:1px solid #26344d;background:#0b1020cc}header small{color:var(--teal);font-weight:800;letter-spacing:.12em}h1{font-size:clamp(34px,5vw,54px);line-height:1.1;margin:12px 0}header p{color:var(--muted);max-width:850px;margin-bottom:0}
+main{max-width:1100px;margin:28px auto;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:20px}.panel{background:#131c31eF;border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 16px 45px #0003}h2{margin-top:0;font-size:24px}label{display:block;font-weight:700;margin:14px 0 6px}textarea,select,input{width:100%;padding:13px 14px;background:#0b1326;color:var(--text);border:1px solid #394965;border-radius:12px;font:inherit}textarea{min-height:230px;resize:vertical}button{border:0;border-radius:12px;padding:13px 18px;font:inherit;font-weight:800;cursor:pointer;background:linear-gradient(100deg,var(--teal),var(--cyan));color:#08111f;margin-top:16px}button.secondary{background:#263651;color:var(--text);border:1px solid #465777;margin-left:8px}.note{color:var(--muted);font-size:15px}.pill{display:inline-block;color:var(--teal);background:#123b40;border:1px solid #1e625f;padding:3px 10px;border-radius:99px;font-size:14px;font-weight:800}.question{padding:16px;margin:14px 0;border:1px solid var(--line);border-radius:14px;background:#0c1529}.question p{margin-top:0;font-weight:750}.option{display:block;margin:8px 0;padding:10px 12px;border-radius:10px;background:#17243c;cursor:pointer}.option input{width:auto;margin-right:8px}.answer{display:none;margin-top:10px;padding:10px;border-radius:10px;background:#123a35;color:#b9fff1}.answer.show{display:block}.result{font-weight:800;color:var(--teal)}footer{text-align:center;color:var(--muted);padding:25px;font-size:15px}@media(max-width:800px){main{grid-template-columns:1fr}header{padding:24px 20px}}
+</style></head>
+<body>
+<header><small>STUDY SMARTER · COURSE 1</small><h1>AI Ôn Tập</h1><p>Biến tài liệu học tập thành câu hỏi để tự luyện tập. Dán nội dung, tạo bộ câu hỏi mẫu, trả lời và xem phần giải thích.</p></header>
+<main>
+<section class="panel"><span class="pill">BƯỚC 1</span><h2>Đưa tài liệu vào</h2>
+<label for="source">Nội dung tài liệu</label><textarea id="source" placeholder="Dán đoạn tài liệu học tập vào đây…">Trí tuệ nhân tạo (AI) là lĩnh vực tạo ra hệ thống có thể thực hiện những nhiệm vụ thường cần trí thông minh của con người. Học máy là một nhánh của AI, cho phép máy tính học các mẫu từ dữ liệu. Dữ liệu huấn luyện được dùng để xây dựng mô hình. Dữ liệu cần được kiểm tra chất lượng vì dữ liệu sai lệch có thể dẫn đến kết quả không đáng tin cậy. Người dùng cần đánh giá đầu ra của AI trước khi sử dụng.</textarea>
+<label for="count">Số câu hỏi</label><select id="count"><option>3</option><option selected>5</option><option>8</option></select>
+<button onclick="generate()">Tạo câu hỏi mẫu</button><button class="secondary" onclick="loadSample()">Dùng văn bản mẫu</button>
+<p class="note">Bản demo chạy cục bộ: việc tạo câu hỏi hiện dùng quy tắc minh họa trong trình duyệt, chưa gọi mô hình AI trực tuyến. Không nhập thông tin cá nhân hoặc tài liệu mật.</p>
+</section>
+<section class="panel"><span class="pill">BƯỚC 2</span><h2>Bộ câu hỏi ôn tập</h2><div id="quiz"><p class="note">Câu hỏi sẽ xuất hiện tại đây sau khi bạn bấm “Tạo câu hỏi mẫu”.</p></div><div id="score" class="result"></div></section>
+</main><footer>AI hỗ trợ học tập — hãy đối chiếu câu hỏi và đáp án với tài liệu gốc.</footer>
+<script>
+const sample="Trí tuệ nhân tạo (AI) là lĩnh vực tạo ra hệ thống có thể thực hiện những nhiệm vụ thường cần trí thông minh của con người. Học máy là một nhánh của AI, cho phép máy tính học các mẫu từ dữ liệu. Dữ liệu huấn luyện được dùng để xây dựng mô hình. Dữ liệu cần được kiểm tra chất lượng vì dữ liệu sai lệch có thể dẫn đến kết quả không đáng tin cậy. Người dùng cần đánh giá đầu ra của AI trước khi sử dụng.";
+let questions=[];
+function loadSample(){document.getElementById('source').value=sample}
+function sentences(text){return text.replace(/\n+/g,' ').split(/(?<=[.!?。])\s+/).map(s=>s.trim()).filter(s=>s.length>35)}
+function generate(){
+ const text=document.getElementById('source').value.trim(), n=+document.getElementById('count').value;
+ const ss=sentences(text);
+ const root=document.getElementById('quiz');document.getElementById('score').textContent='';
+ if(!text||ss.length===0){root.innerHTML='<p>Vui lòng nhập ít nhất một câu đầy đủ.</p>';return}
+ questions=ss.slice(0,n).map((s,i)=>({text:s,opts:[s,'Nội dung này không xuất hiện trong tài liệu.','Tài liệu không đề cập đến chủ đề này.','Không thể kết luận từ câu đã cho.'],correct:0}));
+ root.innerHTML=questions.map((q,i)=>`<div class="question"><p>${i+1}. Ý nào dưới đây được nêu trực tiếp trong tài liệu?</p>${q.opts.map((o,j)=>`<label class="option"><input type="radio" name="q${i}" value="${j}">${escapeHtml(o)}</label>`).join('')}<div class="answer" id="a${i}"><b>Đáp án minh họa:</b> ${escapeHtml(q.text)}<br><span class="note">Đối chiếu câu này với tài liệu gốc; đây là câu hỏi mẫu đơn giản, chưa phải đánh giá ngữ nghĩa bằng AI.</span></div><button class="secondary" onclick="document.getElementById('a${i}').classList.toggle('show')">Xem đáp án</button></div>`).join('')+`<button onclick="grade()">Chấm câu trả lời</button>`;
+}
+function grade(){let score=0;questions.forEach((q,i)=>{let v=document.querySelector(`input[name="q${i}"]:checked`);if(v&&+v.value===0)score++});document.getElementById('score').textContent=`Kết quả demo: ${score}/${questions.length} câu chọn đáp án trùng với câu nguồn.`}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+generate();
+</script></body></html>
